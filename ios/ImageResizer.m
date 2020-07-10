@@ -60,7 +60,7 @@ RCT_EXPORT_METHOD(resizeImage:(NSString *)imageUrl
         
         UIImage *originalImage =  [UIImage imageWithData: data];
         
-        if (originalImage.size.width < width && originalImage.size.height < height) {
+        if (originalImage.size.width <= width && originalImage.size.height <= height) {
             resolve(@{});
             return; 
         }
