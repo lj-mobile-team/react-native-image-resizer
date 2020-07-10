@@ -1,4 +1,3 @@
-#import <AssetsLibrary/AssetsLibrary.h>
 #import <UIKit/UIKit.h>
 #import "ImageResizer.h"
 #include "ImageHelpers.h"
@@ -60,6 +59,12 @@ RCT_EXPORT_METHOD(resizeImage:(NSString *)imageUrl
         }
         
         UIImage *originalImage =  [UIImage imageWithData: data];
+        
+        if (originalImage.size.width < width && originalImage.size.height < height) {
+            resolve(@{});
+            return; 
+        }
+        
         UIImage *scaledImage = [originalImage scaleToSize:newSize];
         
         NSData *imageData = [self getImageData:url image:scaledImage];
