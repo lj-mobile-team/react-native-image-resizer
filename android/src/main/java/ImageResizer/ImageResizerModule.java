@@ -17,7 +17,7 @@ import android.util.Base64;
 import android.provider.MediaStore;
 import android.net.Uri;
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.FileNotFoundException;
 
@@ -40,7 +40,7 @@ public class ImageResizerModule extends ReactContextBaseJavaModule {
 	{
 		try
 		{
-			Bitmap image = MediaStore.Images.Media.getBitmap(this.context.getContentResolver(), Uri.parse(uri));
+			Bitmap image = MediaStore.Images.Media.getBitmap(this.reactContext.getContentResolver(), Uri.parse(uri));
 			if (image == null)
 				// callback.invoke("FAIL : uri: " + uri);
                 promise.resolve(null);
@@ -58,7 +58,7 @@ public class ImageResizerModule extends ReactContextBaseJavaModule {
 	{
 		try
 		{
-			Bitmap image = MediaStore.Images.Media.getBitmap(this.context.getContentResolver(), Uri.parse(uri));
+			Bitmap image = MediaStore.Images.Media.getBitmap(this.reactContext.getContentResolver(), Uri.parse(uri));
 			if (image == null) {
 				// callback.invoke("FAIL : uri: " + uri);
                 promise.resolve(null);
