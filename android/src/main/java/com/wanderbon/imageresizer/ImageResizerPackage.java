@@ -1,4 +1,4 @@
-package ImageResizer;
+package com.wanderbon.imageresizer;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -14,6 +14,10 @@ public class ImageResizerPackage implements ReactPackage {
     @Override
     public List<NativeModule> createNativeModules(ReactApplicationContext reactContext) {
         return Arrays.<NativeModule>asList(new ImageResizerModule(reactContext));
+    }
+
+    public List<Class<? extends JavaScriptModule>> createJSModules() {
+        return null;
     }
 
     @Override

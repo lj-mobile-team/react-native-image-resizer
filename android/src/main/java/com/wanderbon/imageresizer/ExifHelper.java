@@ -1,4 +1,4 @@
-package ImageResizer;
+package com.wanderbon.imageresizer;
 
 import android.media.ExifInterface;
 
