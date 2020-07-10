@@ -56,8 +56,7 @@ public class ImageResizerModule extends ReactContextBaseJavaModule {
     @ReactMethod
 	public void resizeImage(String uri, int width, int height, final Promise promise)
 	{
-		try
-		{
+		try {
 			Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.reactContext.getContentResolver(), Uri.parse(uri));
 			if (bitmap == null) {
 				// callback.invoke("FAIL : uri: " + uri);
@@ -81,7 +80,8 @@ public class ImageResizerModule extends ReactContextBaseJavaModule {
             promise.resolve(null);
 		}
 		catch (IOException e) {
-             e.printStackTrace();
+            promise.resolve(null);
+            e.printStackTrace();
 		}
     }
     
