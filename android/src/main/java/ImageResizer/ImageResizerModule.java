@@ -3,23 +3,26 @@ package ImageResizer;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
-import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.Promise;
-import com.facebook.react.bridge.PromiseImpl;
+import com.facebook.react.bridge.WritableArray;
+import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.bridge.WritableNativeArray;
+import com.facebook.react.bridge.WritableNativeMap;
 
-import java.util.Map;
+import java.io.EOFException;
+import java.io.FilenameFilter;
 import java.io.ByteArrayOutputStream;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.util.Base64;
 import android.provider.MediaStore;
 import android.net.Uri;
+import android.webkit.MimeTypeMap;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.FileNotFoundException;
 
 public class ImageResizerModule extends ReactContextBaseJavaModule {
 
@@ -34,71 +37,126 @@ public class ImageResizerModule extends ReactContextBaseJavaModule {
     public String getName() {
         return "ImageResizer";
     }
-    
-    // MARK: Этот метод по факту не используется
+
     @ReactMethod
-	public void resizedBase64(String uri, int width, int height, final Promise promise)
-	{
-		try {
-			Bitmap image = MediaStore.Images.Media.getBitmap(this.reactContext.getContentResolver(), Uri.parse(uri));
-			if (image == null)
-				// callback.invoke("FAIL : uri: " + uri);
-                promise.resolve(null);
-			else
-                promise.resolve(makeConversion(image, width, height));
-				//callback.invoke(null, makeConversion(image, width, height));
-		}
-		catch (IOException e)
-		{
-		}
+    public void clean(final Promise promise) {
+        final File folder = reactContext.getCacheDir();
+        final File[] files = folder.listFiles( new FilenameFilter() {
+            @Override
+            public boolean accept(final File dir,
+                                   final String name) {
+                return name.contains( "resizer_");
+            }
+        });
+
+        WritableArray result = new WritableNativeArray();
+
+        for (final File file : files) {
+            WritableMap fileMap = new WritableNativeMap();
+
+            if (!file.delete()) {
+                fileMap.putBoolean(file.getAbsolutePath(), false);
+            } else {
+                fileMap.putBoolean(file.getAbsolutePath(), true);
+            }
+
+            result.pushMap(fileMap);
+        }
+
+        promise.resolve(result);
     }
-    
+
     @ReactMethod
 	public void resizeImage(String uri, int width, int height, final Promise promise)
 	{
-        // TODO: Если размер картинки меньше чем размер для скейла, то не нужно ее скейлить
-        // TODO: После скейла картинка должна сохраняться в uri, нужно выяснить почему текущий код не работает 
-        // TODO: В зависимости от разрешения картинки нужно использовать compressFormat.JPEG или compressFormat.PNG
-		try {
-			Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.reactContext.getContentResolver(), Uri.parse(uri));
+	    float newWidth = width;
+	    float newHeight = height;
+	    Uri parsedUri = Uri.parse(uri);
+
+	    try {
+			Bitmap bitmap = MediaStore.Images.Media.getBitmap(reactContext.getContentResolver(), parsedUri);
 			if (bitmap == null) {
-				// callback.invoke("FAIL : uri: " + uri);
                 promise.resolve(null);
                 return;
             }
-            
-            if (width != 0 && height != 0)
-                bitmap = Bitmap.createScaledBitmap(bitmap, width, height, false);
+
+            float originalWidth = bitmap.getWidth();
+            float originalHeight = bitmap.getHeight();
+
+			if(originalWidth <= newWidth && originalHeight <= newHeight) {
+                promise.resolve(null);
+                return;
+            }
+
+            if(originalWidth < originalHeight) {
+                newWidth = width * (originalWidth / originalHeight);
+            } else if(originalHeight < originalWidth) {
+                newHeight = height * (originalHeight / originalWidth);
+            }
+
+            if (newWidth != 0 && newHeight != 0)
+                bitmap = Bitmap.createScaledBitmap(bitmap, (int)newWidth, (int)newHeight, false);
 		    else
 			    bitmap = Bitmap.createBitmap(bitmap);
-            
-            File file = new File(uri);
-            
-            FileOutputStream out = new FileOutputStream(file);
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, out);
-            
-            out.flush();
-            out.close();
 
-            promise.resolve(null);
+            String mimeType = getMimeType(reactContext, parsedUri);
+            Bitmap.CompressFormat compressFormat = mimeType == "png" ? Bitmap.CompressFormat.PNG : Bitmap.CompressFormat.JPEG;
+
+            File path = reactContext.getCacheDir();
+            File oldFile = new File(uri);
+
+            File file = saveImage(bitmap, path, oldFile, compressFormat, 80);
+
+
+            try {
+                ExifHelper.copyExif(oldFile.getCanonicalPath().replace("/file:", ""), file.getCanonicalPath());
+            } catch (EOFException e) {
+                e.printStackTrace();
+            }
+
+            bitmap.recycle();
+            promise.resolve(file.getCanonicalPath());
 		}
 		catch (IOException e) {
             promise.resolve(null);
             e.printStackTrace();
 		}
     }
-    
-    
-    private String makeConversion(Bitmap bitmap, int width, int height) {
-		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
-		if (width != 0 && height != 0)
-			bitmap = Bitmap.createScaledBitmap(bitmap, width, height, false);
-		else
-			bitmap = Bitmap.createBitmap(bitmap);
+    private String getMimeType(Context context, Uri uri) {
+        String extension;
 
-		bitmap.compress(Bitmap.CompressFormat.PNG, 80, byteArrayOutputStream);
-		byte[] byteArray = byteArrayOutputStream.toByteArray();
-		return Base64.encodeToString(byteArray, Base64.DEFAULT);
-	}
+        if (uri.getScheme().equals(ContentResolver.SCHEME_CONTENT)) {
+            final MimeTypeMap mime = MimeTypeMap.getSingleton();
+            extension = mime.getExtensionFromMimeType(context.getContentResolver().getType(uri));
+        } else {
+            extension = MimeTypeMap.getFileExtensionFromUrl(Uri.fromFile(new File(uri.getPath())).toString());
+        }
+
+        return extension;
+    }
+
+    private File saveImage(Bitmap bitmap, File saveDirectory, File oldFile,
+                                 Bitmap.CompressFormat compressFormat, int quality)
+            throws IOException {
+        if (bitmap == null) {
+            throw new IOException("The bitmap couldn't be resized");
+        }
+
+        File newFile = new File(saveDirectory, "resizer_" + oldFile.getName());
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        bitmap.compress(compressFormat, quality, outputStream);
+        byte[] bitmapData = outputStream.toByteArray();
+
+        outputStream.flush();
+        outputStream.close();
+
+        FileOutputStream fos = new FileOutputStream(newFile);
+        fos.write(bitmapData);
+        fos.flush();
+        fos.close();
+
+        return newFile;
+    }
 }
