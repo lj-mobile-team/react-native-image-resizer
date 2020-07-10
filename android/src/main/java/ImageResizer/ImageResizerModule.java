@@ -39,8 +39,7 @@ public class ImageResizerModule extends ReactContextBaseJavaModule {
     @ReactMethod
 	public void resizedBase64(String uri, int width, int height, final Promise promise)
 	{
-		try
-		{
+		try {
 			Bitmap image = MediaStore.Images.Media.getBitmap(this.reactContext.getContentResolver(), Uri.parse(uri));
 			if (image == null)
 				// callback.invoke("FAIL : uri: " + uri);
@@ -76,7 +75,7 @@ public class ImageResizerModule extends ReactContextBaseJavaModule {
             File file = new File(uri);
             
             FileOutputStream out = new FileOutputStream(file);
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, out);
             
             out.flush();
             out.close();
@@ -98,7 +97,7 @@ public class ImageResizerModule extends ReactContextBaseJavaModule {
 		else
 			bitmap = Bitmap.createBitmap(bitmap);
 
-		bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+		bitmap.compress(Bitmap.CompressFormat.PNG, 80, byteArrayOutputStream);
 		byte[] byteArray = byteArrayOutputStream.toByteArray();
 		return Base64.encodeToString(byteArray, Base64.DEFAULT);
 	}
