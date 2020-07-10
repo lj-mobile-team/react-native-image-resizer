@@ -7,41 +7,69 @@
 
 RCT_EXPORT_MODULE()
 
-RCT_EXPORT_METHOD(assetToResizedBase64:(NSString *)imageUrl
-                    width:(float)width
-                    height:(float)height
-                    callback:(RCTResponseSenderBlock)callback) {
+- (NSData *)getImageData:(NSURL *)url image:(UIImage *)image {
+    BOOL isJPG = [url.pathExtension.lowercaseString  isEqual: @"jpg"] || [url.pathExtension.lowercaseString  isEqual: @"jpeg"];
     
-    NSLog(@"assetToResizedBase64");
-    /*
-    CGSize newSize = CGSizeMake(width, height);
-    NSURL *url = [[NSURL alloc] initWithString:imageUrl];
-    ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
-
-    [library assetForURL:url resultBlock:^(ALAsset *asset)
-    {
-        //Get the image Representation
-        ALAssetRepresentation *representation = [asset defaultRepresentation];
-        CGImageRef imageRef = [representation fullScreenImage];
-
-        //Get the image data and scale it according to Width and Height
-        NSData *imagePngRep = UIImagePNGRepresentation([UIImage imageWithCGImage:imageRef]);
-        UIImage *imageUI = [UIImage imageWithData:imagePngRep];
-        UIImage *scaledImage = [imageUI scaleToSize:newSize];
-
-        //Et the newImageData and transform it to base64
-        NSData *ImageData = UIImagePNGRepresentation(scaledImage);
-        NSString *base64Encoded = [ImageData base64EncodedStringWithOptions:0];
-
-        callback(@[[NSNull null], base64Encoded]);
+    if (isJPG) {
+        return UIImageJPEGRepresentation(image, 1.0);
+    } else {
+        return UIImagePNGRepresentation(image);
     }
-    failureBlock:^(NSError *error)
-    {
-        NSLog(@"that didn't work %@", error);
-        callback(@[error]);
-    }];
-     */
+}
+
+RCT_EXPORT_METHOD(resizedBase64:(NSString *)imageUrl
+                  width:(float)width
+                  height:(float)height
+                  resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    
+    CGSize newSize = CGSizeMake(width, height);
+    NSURL *url = [NSURL URLWithString: imageUrl];
+    
+    dispatch_async(dispatch_get_global_queue(0,0), ^{
+        NSData * data = [[NSData alloc] initWithContentsOfURL: url];
+        
+        if (data == nil) {
+            resolve(@{});
+            return;
+        }
+        
+        UIImage *originalImage =  [UIImage imageWithData: data];
+        UIImage *scaledImage = [originalImage scaleToSize:newSize];
+        
+        NSData *imageData = [self getImageData:url image:scaledImage];
+        NSString *base64Encoded = [imageData base64EncodedStringWithOptions:0];
+        
+        resolve(base64Encoded);
+    });
+}
+
+RCT_EXPORT_METHOD(resizeImage:(NSString *)imageUrl
+                  width:(float)width
+                  height:(float)height
+                  resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject) {
+    
+    CGSize newSize = CGSizeMake(width, height);
+    NSURL *url = [NSURL URLWithString: imageUrl];
+    
+    dispatch_async(dispatch_get_global_queue(0,0), ^{
+        NSData * data = [[NSData alloc] initWithContentsOfURL: url];
+        
+        if (data == nil) {
+            resolve(@{});
+            return;
+        }
+        
+        UIImage *originalImage =  [UIImage imageWithData: data];
+        UIImage *scaledImage = [originalImage scaleToSize:newSize];
+        
+        NSData *imageData = [self getImageData:url image:scaledImage];
+        
+        if (![imageData writeToURL:url atomically:YES]) {
+            NSLog(@"Failed to save image data to disk");
+        }
+        
+        resolve(@{});
+    });
 }
 
 @end
-
