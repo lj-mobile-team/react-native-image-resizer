@@ -35,6 +35,7 @@ public class ImageResizerModule extends ReactContextBaseJavaModule {
         return "ImageResizer";
     }
     
+    // MARK: Этот метод по факту не используется
     @ReactMethod
 	public void resizedBase64(String uri, int width, int height, final Promise promise)
 	{
@@ -56,6 +57,9 @@ public class ImageResizerModule extends ReactContextBaseJavaModule {
     @ReactMethod
 	public void resizeImage(String uri, int width, int height, final Promise promise)
 	{
+        // TODO: Если размер картинки меньше чем размер для скейла, то не нужно ее скейлить
+        // TODO: После скейла картинка должна сохраняться в uri, нужно выяснить почему текущий код не работает 
+        // TODO: В зависимости от разрешения картинки нужно использовать compressFormat.JPEG или compressFormat.PNG
 		try {
 			Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.reactContext.getContentResolver(), Uri.parse(uri));
 			if (bitmap == null) {
