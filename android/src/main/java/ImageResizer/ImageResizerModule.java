@@ -4,6 +4,8 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.Callback;
+import com.facebook.react.bridge.Promise;
+import com.facebook.react.bridge.PromiseImpl;
 
 import java.util.Map;
 import java.io.ByteArrayOutputStream;
@@ -14,6 +16,8 @@ import android.graphics.BitmapFactory;
 import android.util.Base64;
 import android.provider.MediaStore;
 import android.net.Uri;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.FileNotFoundException;
 
