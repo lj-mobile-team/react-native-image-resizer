@@ -58,14 +58,12 @@ public class ImageResizerModule extends ReactContextBaseJavaModule {
 	{
 		try
 		{
-			Bitmap image = MediaStore.Images.Media.getBitmap(this.reactContext.getContentResolver(), Uri.parse(uri));
-			if (image == null) {
+			Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.reactContext.getContentResolver(), Uri.parse(uri));
+			if (bitmap == null) {
 				// callback.invoke("FAIL : uri: " + uri);
                 promise.resolve(null);
                 return;
             }
-            
-            Bitmap bitmap;
             
             if (width != 0 && height != 0)
                 bitmap = Bitmap.createScaledBitmap(bitmap, width, height, false);
