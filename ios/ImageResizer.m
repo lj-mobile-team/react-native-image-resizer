@@ -10,7 +10,7 @@ RCT_EXPORT_MODULE()
     BOOL isJPG = [url.pathExtension.lowercaseString  isEqual: @"jpg"] || [url.pathExtension.lowercaseString  isEqual: @"jpeg"];
     
     if (isJPG) {
-        return UIImageJPEGRepresentation(image, 1.0);
+        return UIImageJPEGRepresentation(image, 0.8);
     } else {
         return UIImagePNGRepresentation(image);
     }
