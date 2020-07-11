@@ -54,14 +54,14 @@ RCT_EXPORT_METHOD(resizeImage:(NSString *)imageUrl
         NSData * data = [[NSData alloc] initWithContentsOfURL: url];
         
         if (data == nil) {
-            resolve(@{});
+            resolve(imageUrl);
             return;
         }
         
         UIImage *originalImage =  [UIImage imageWithData: data];
         
         if (originalImage.size.width <= width && originalImage.size.height <= height) {
-            resolve(@{});
+            resolve(imageUrl);
             return; 
         }
         
@@ -73,7 +73,7 @@ RCT_EXPORT_METHOD(resizeImage:(NSString *)imageUrl
             NSLog(@"Failed to save image data to disk");
         }
         
-        resolve(@{});
+        resolve(imageUrl);
     });
 }
 
