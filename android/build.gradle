@@ -66,28 +66,30 @@ dependencies {
 }
 
 def configureReactNativePom(def pom) {
-    def packageJson = new groovy.json.JsonSlurper().parseText(file('../package.json').text)
-
     pom.project {
-        name packageJson.title
-        artifactId packageJson.name
-        version = packageJson.version
+        name "React Native Image Resizer"
+        artifactId "react-native-image-resizer"
+        version = "1.0.0"
         group = "com.wanderbon.imageresizer"
-        description packageJson.description
-        url packageJson.repository.baseUrl
+        description "TODO"
+        url "https://github.com/sashablokhin/react-native-image-resizer"
 
         licenses {
             license {
-                name packageJson.license
-                url packageJson.repository.baseUrl + '/blob/master/' + packageJson.licenseFilename
+                name "MIT"
+                url "https://github.com/sashablokhin/react-native-image-resizer/blob/master/LICENSE"
                 distribution 'repo'
             }
         }
 
         developers {
             developer {
-                id packageJson.author.username
-                name packageJson.author.name
+                id "wanderbon"
+                name "Evgeniy Kozhich"
+            }
+            developer {
+                id "sashablokhin"
+                name "sashablokhin"
             }
         }
     }
@@ -116,8 +118,8 @@ afterEvaluate { project ->
 
     android.libraryVariants.all { variant ->
         def name = variant.name.capitalize()
-        task "jar${name}"(type: Jar, dependsOn: variant.javaCompile) {
-            from variant.javaCompile.destinationDir
+        task "jar${name}"(type: Jar, dependsOn: variant.javaCompileProvider) {
+            from variant.javaCompileProvider.get().destinationDir
         }
     }
 
