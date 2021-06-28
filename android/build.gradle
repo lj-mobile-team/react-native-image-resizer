@@ -69,7 +69,7 @@ def configureReactNativePom(def pom) {
     pom.project {
         name "React Native Image Resizer"
         artifactId "react-native-image-resizer"
-        version = "1.0.0"
+        version = "1.0.1"
         group = "com.wanderbon.imageresizer"
         description "TODO"
         url "https://github.com/sashablokhin/react-native-image-resizer"
